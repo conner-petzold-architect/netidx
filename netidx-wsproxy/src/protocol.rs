@@ -1,5 +1,8 @@
 use netidx::{
-    path::Path, protocol::value::Value, publisher::Id as PubId, subscriber::{SubId, Event},
+    path::Path,
+    protocol::value::Value,
+    publisher::Id as PubId,
+    subscriber::{Event, SubId},
 };
 use serde_derive::{Deserialize, Serialize};
 
