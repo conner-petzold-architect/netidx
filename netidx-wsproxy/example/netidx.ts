@@ -1,3 +1,4 @@
+import WebSocket from "isomorphic-ws";
 import { EventEmitter } from "events";
 
 type NetidxValue =
@@ -63,7 +64,7 @@ const MESSAGE_PAIRS = {
 
 export class Netidx extends EventEmitter {
   private con: WebSocket;
-  private openPromise: Promise<Event>;
+  private openPromise: Promise<WebSocket.Event>;
 
   constructor(url: string | URL) {
     super();
@@ -75,11 +76,11 @@ export class Netidx extends EventEmitter {
     });
 
     this.con.addEventListener("message", (event) => {
-      const message: FromWs = JSON.parse(event.data);
+      const message: FromWs = JSON.parse(event.data as string);
 
       switch (message.type) {
         case "Update": {
-          this.emit(message.id, message.event);
+          this.emit(message.id.toString(), message.event);
           break;
         }
       }
@@ -92,8 +93,8 @@ export class Netidx extends EventEmitter {
     await this.openPromise;
 
     return new Promise((resolve) => {
-      const listener = (event: MessageEvent) => {
-        const from: From = JSON.parse(event.data);
+      const listener = (event: WebSocket.MessageEvent) => {
+        const from: From = JSON.parse(event.data as string);
         if (from.type === MESSAGE_PAIRS[to.type]) {
           resolve(from);
           this.con.removeEventListener("message", listener);
@@ -118,13 +119,13 @@ export class Netidx extends EventEmitter {
       throw new Error("Unexpected message type");
     }
 
-    this.on(message.id, listener);
+    this.on(message.id.toString(), listener);
     return () => {
       this.send<
         Extract<ToWs, { type: "Unsubscribe" }>,
         Extract<FromWs, { type: "Unsubscribed" }>
       >({ type: "Unsubscribe", id: message.id });
-      this.off(message.id, listener);
+      this.off(message.id.toString(), listener);
     };
   }
 }
